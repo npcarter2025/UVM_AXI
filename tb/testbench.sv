@@ -29,7 +29,20 @@ module tb_top();
 
    // VCD dump
    initial begin
-     $vcdpluson();
+    $vcdpluson();
+`ifdef VPD_DUMP
+     // VPD format (for DVE)
+     $vcdpluson(0, tb_top);
+     $vcdplusmemon(0, tb_top);
+`elsif VCD_DUMP
+     // VCD format (for Verdi/GTKWave)
+     $dumpfile(`VCD_FILE);
+     $dumpvars(0, tb_top);
+`elsif FSDB_DUMP
+     // FSDB format (for Verdi)
+     $fsdbDumpfile(`FSDB_FILE);
+     $fsdbDumpvars(0, tb_top);
+`endif
    end
 
    // UVM test execution

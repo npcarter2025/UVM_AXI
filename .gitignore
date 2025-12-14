@@ -1,0 +1,63 @@
+# VCS Build Artifacts
+simv
+simv.daidir/
+simv.vdb/
+csrc/
+*.daidir
+*.vdb
+
+# Log Files
+*.log
+compile.log
+run.log
+cm.log
+tr_db.log
+
+# Waveform Files
+*.vpd
+vcdplus.vpd
+waveform.vpd
+*.vcd
+*.fsdb
+
+# Coverage Reports
+coverage_report/
+coverage*.vdb
+
+# DVE (Design Vision Environment) Files
+DVEfiles/
+
+# Verdi Files
+verdiLog/
+verdi_config_file
+
+# VCS Temporary Files
+ucli.key
+vc_hdrs.h
+inter.vpd
+
+# Editor Swap Files (Vim, etc.)
+*.swp
+*.swo
+*.swn
+*.swm
+*~
+
+# Backup Files
+*.old
+*.bak
+*.bk
+*.backup
+
+# Generated XML Files
+.fsm.sch.verilog.xml
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

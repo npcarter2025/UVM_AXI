@@ -23,10 +23,19 @@ VCS_OPTIONS = -timescale=1ns/1ns +vcs+flush+all +v2k +warn=all -kdb -sverilog \
               +incdir+env +incdir+subscribers +incdir+include \
               -debug_all -full64 -cm $(COVERAGE) $(WAVEFORM_DEFINE)
 
-UVM_OPTIONS = -ntb_opts uvm-1.2 +UVM_NO_DPI +define+UVM_NO_DEPRECATED
+# UVM options - remove +UVM_NO_DPI if using C memory model (requires DPI)
+ifeq ($(USE_C_MEMORY_MODEL),1)
+  UVM_OPTIONS = -ntb_opts uvm-1.2 +define+UVM_NO_DEPRECATED +define+USE_DPI_MODEL
+else
+  UVM_OPTIONS = -ntb_opts uvm-1.2 +UVM_NO_DPI +define+UVM_NO_DEPRECATED
+endif
 
 # Test selection - default to basic test, can be overridden
 TESTNAME ?= axi_basic_test
+
+# C memory model option - set USE_C_MEMORY_MODEL=1 to use C implementation
+USE_C_MEMORY_MODEL ?= 0
+C_MEMORY_MODEL_SRC = subscribers/axi_memory_model.c
 
 # Waveform generation - set WAVEFORM=1 to enable waveform dumping
 # WAVEFORM_FORMAT can be: vpd (DVE), vcd (Verdi/GTKWave), or fsdb (Verdi)
@@ -72,6 +81,9 @@ SV_FILES = tests/test_pkg.sv
 # All build artifacts go to $(BUILD_DIR)/
 compile: $(SV_FILES)
 	@mkdir -p $(BUILD_DIR)
+	@if [ "$(USE_C_MEMORY_MODEL)" = "1" ]; then \
+		echo "Using C memory model (DPI enabled)"; \
+	fi
 	@PLI_TAB=""; \
 	if [ "$(WAVEFORM_FORMAT)" = "fsdb" ]; then \
 		PLI_TAB="$(call find_pli_tab)"; \
@@ -87,8 +99,12 @@ compile: $(SV_FILES)
 	else \
 		PLI_OPT=""; \
 	fi; \
+	DPI_SRC=""; \
+	if [ "$(USE_C_MEMORY_MODEL)" = "1" ]; then \
+		DPI_SRC="$(C_MEMORY_MODEL_SRC)"; \
+	fi; \
 	$(VCS) $(VCS_OPTIONS) $$PLI_OPT $(UVM_OPTIONS) -l $(BUILD_DIR)/compile.log \
-	       src/axi_if.sv src/mem_pkg.sv $(DUT_TOP) $(SV_FILES) $(TB_TOP) -o $(BUILD_DIR)/simv
+	       src/axi_if.sv src/mem_pkg.sv $(DUT_TOP) $(SV_FILES) $(TB_TOP) $$DPI_SRC -o $(BUILD_DIR)/simv
 	@if [ -d csrc ]; then mv csrc $(BUILD_DIR)/ 2>/dev/null || true; fi
 	@if [ -d simv.daidir ]; then mv simv.daidir $(BUILD_DIR)/ 2>/dev/null || true; fi
 	@if [ -f ucli.key ]; then mv ucli.key $(BUILD_DIR)/ 2>/dev/null || true; fi
@@ -457,6 +473,12 @@ help:
 	@echo "    make run COVERAGE=all"
 	@echo "    make run_all COVERAGE=all"
 	@echo "  Custom coverage: make run COVERAGE=\"line+cond+branch+tgl\""
+	@echo ""
+	@echo "C Memory Model (DPI):"
+	@echo "  Use C memory model implementation in scoreboard:"
+	@echo "    make run USE_C_MEMORY_MODEL=1"
+	@echo "    make compile USE_C_MEMORY_MODEL=1"
+	@echo "  Note: This enables DPI and compiles subscribers/axi_memory_model.c"
 	@echo ""
 	@echo "Available tests:"
 	@echo "  - axi_basic_test       - Basic functional test"

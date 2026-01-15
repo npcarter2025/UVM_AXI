@@ -50,6 +50,12 @@ module tb_top();
       // Set virtual interface in config_db
       uvm_config_db#(virtual axi_if.tb)::set(null, "*", "vif", axi_vif);
       
+      // Configure C memory model if USE_DPI_MODEL is defined
+`ifdef USE_DPI_MODEL
+      uvm_config_db#(bit)::set(null, "*scoreboard*", "use_c_memory_model", 1);
+      `uvm_info("TB_TOP", "C memory model enabled via USE_DPI_MODEL", UVM_LOW)
+`endif
+      
       // Run test
       run_test();
    end
